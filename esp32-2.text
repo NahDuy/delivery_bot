@@ -1,0 +1,36 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+const char* ssid = "YOUR_WIFI";
+const char* password = "YOUR_PASS";
+
+void setup() {
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) delay(1000);
+}
+
+void loop() {
+  HTTPClient http;
+  http.begin("http://<your-computer-ip>:5000/get_route");
+  int httpCode = http.GET();
+
+  if (httpCode == 200) {
+    String payload = http.getString();
+    Serial.println(payload); // Tại đây bạn sẽ phân tích JSON và điều hướng
+
+    // Parse JSON nếu muốn:
+    DynamicJsonDocument doc(1024);
+    deserializeJson(doc, payload);
+    for (JsonObject point : doc.as<JsonArray>()) {
+      float x = point["x"];
+      float y = point["y"];
+      Serial.printf("Đi đến: x=%.2f, y=%.2f\n", x, y);
+      // moveTo(x, y); // hàm điều hướng tự viết
+    }
+  }
+
+  http.end();
+  delay(10000); // Lặp lại sau 10s
+}
