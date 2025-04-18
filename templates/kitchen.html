@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Đơn Hàng Nhà Bếp</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        header {
+            background-color: #4CAF50;
+            color: white;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        .container {
+            padding: 20px;
+        }
+
+        h1 {
+            margin-bottom: 20px;
+        }
+
+        .order-list {
+            list-style-type: none;
+            padding: 0;
+        }
+
+        .order-card {
+            background-color: #fff;
+            padding: 15px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            font-size: 18px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Danh Sách Đơn Hàng</h1>
+    </header>
+
+    <div class="container">
+        <ul id="orderList" class="order-list"></ul>
+    </div>
+
+    <script>
+        fetch('/orders')
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('orderList');
+                data.forEach(order => {
+                    const li = document.createElement('li');
+                    li.className = 'order-card';
+                    li.textContent = `Bàn: ${order.table} - Món: ${order.dish}`;
+                    list.appendChild(li);
+                });
+            });
+    </script>
+</body>
+</html>

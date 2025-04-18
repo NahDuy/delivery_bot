@@ -1,5 +1,6 @@
 from flask import Flask, request, jsonify
 import json
+import os
 
 app = Flask(__name__)
 
@@ -12,7 +13,12 @@ delivery_points = {
 
 @app.route('/')
 def home():
-    return open('templates/index.html').read()
+    return open('templates/index.html', encoding='utf-8').read()
+
+@app.route('/kitchen')
+def kitchen():
+    return open('templates/kitchen.html', encoding='utf-8').read()
+
 
 @app.route('/place_order', methods=['POST'])
 def place_order():
@@ -20,22 +26,44 @@ def place_order():
     table = data.get("table")
     dish = data.get("dish")
 
-    # Kiểm tra bàn và món hợp lệ
+    # Kiểm tra dữ liệu
     if table not in delivery_points:
         return jsonify({"status": "error", "message": "Bàn không hợp lệ!"}), 400
     if not dish:
         return jsonify({"status": "error", "message": "Chưa chọn món!"}), 400
 
-    # Lấy tọa độ bàn
     destination = delivery_points[table]
-    
-    # Lưu route vào file JSON (hoặc xử lý logic khác ở đây)
-    route = [{"x": 0, "y": 0}, destination]  # Giả sử xe xuất phát từ (0, 0)
+    route = [{"x": 0, "y": 0}, destination]  # Xe bắt đầu từ (0, 0)
 
-    with open("route_data.json", "w") as f:
-        json.dump(route, f)
+    # Tạo đơn hàng
+    order_entry = {
+        "table": table,
+        "dish": dish,
+        "route": route
+    }
+
+    # Ghi vào file orders.json
+    if os.path.exists("orders.json"):
+        with open("orders.json", "r") as f:
+            orders = json.load(f)
+    else:
+        orders = []
+
+    orders.append(order_entry)
+
+    with open("orders.json", "w") as f:
+        json.dump(orders, f)
 
     return jsonify({"status": "ok", "route": route})
+
+@app.route('/orders')
+def get_orders():
+    try:
+        with open("orders.json", "r") as f:
+            orders = json.load(f)
+    except FileNotFoundError:
+        orders = []
+    return jsonify(orders)
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
