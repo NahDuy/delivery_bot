@@ -4,13 +4,6 @@ import os
 
 app = Flask(__name__)
 
-# Các điểm cố định
-delivery_points = {
-    "ban_1": {"x": 2, "y": 1},
-    "ban_2": {"x": 4, "y": 3},
-    "ban_3": {"x": 1, "y": 4}
-}
-
 @app.route('/')
 def home():
     return open('templates/index.html', encoding='utf-8').read()
@@ -19,34 +12,46 @@ def home():
 def kitchen():
     return open('templates/kitchen.html', encoding='utf-8').read()
 
-
 @app.route('/place_order', methods=['POST'])
 def place_order():
     data = request.json
     table = data.get("table")
     dish = data.get("dish")
 
-    # Kiểm tra dữ liệu
-    if table not in delivery_points:
-        return jsonify({"status": "error", "message": "Bàn không hợp lệ!"}), 400
-    if not dish:
-        return jsonify({"status": "error", "message": "Chưa chọn món!"}), 400
+    if not dish or not table:
+        return jsonify({"status": "error", "message": "Thiếu thông tin"}), 400
 
-    destination = delivery_points[table]
-    route = [{"x": 0, "y": 0}, destination]  # Xe bắt đầu từ (0, 0)
+    # Đọc đường đi từ paths.json
+    try:
+        with open("paths.json", "r") as f:
+            all_paths = json.load(f)["paths"]
 
-    # Tạo đơn hàng
+        pathReceive = []
+        pathBack = []
+        for p in all_paths:
+            if p["to"].lower() == table.lower():
+                pathReceive = p["pathReceive"]
+                pathBack = p["pathBack"]
+                break
+
+        if not pathReceive:
+            return jsonify({"status": "error", "message": "Không tìm thấy đường đi cho bàn này"}), 400
+
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Lỗi đọc paths.json: {e}"}), 500
+
     order_entry = {
         "table": table,
         "dish": dish,
-        "route": route
+        "commands": pathReceive,
+        "returnPath": pathBack
     }
 
-    # Ghi vào file orders.json
-    if os.path.exists("orders.json"):
+    # Ghi đơn hàng vào file
+    try:
         with open("orders.json", "r") as f:
             orders = json.load(f)
-    else:
+    except:
         orders = []
 
     orders.append(order_entry)
@@ -54,7 +59,7 @@ def place_order():
     with open("orders.json", "w") as f:
         json.dump(orders, f)
 
-    return jsonify({"status": "ok", "route": route})
+    return jsonify({"status": "ok"})
 
 @app.route('/orders')
 def get_orders():
@@ -64,6 +69,26 @@ def get_orders():
     except FileNotFoundError:
         orders = []
     return jsonify(orders)
+
+@app.route('/return', methods=['POST'])
+def return_robot():
+    index = request.json.get("index")
+    try:
+        with open("orders.json", "r") as f:
+            orders = json.load(f)
+    except:
+        return jsonify({"status": "error", "message": "Không đọc được file orders"}), 500
+
+    if 0 <= index < len(orders):
+        try:
+            with open("static/return_command.json", "w") as f:
+                json.dump(orders[index]["returnPath"], f)
+            print(f"✅ Gửi returnPath cho đơn index {index}")
+            return jsonify({"status": "ok"})
+        except Exception as e:
+            return jsonify({"status": "error", "message": f"Lỗi ghi return_command.json: {e}"}), 500
+    else:
+        return jsonify({"status": "error", "message": "Index không hợp lệ"}), 400
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)

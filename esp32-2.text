@@ -1,36 +1,122 @@
-#include <WiFi.h>
-#include <HTTPClient.h>
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
 #include <ArduinoJson.h>
 
-const char* ssid = "YOUR_WIFI";
-const char* password = "YOUR_PASS";
+// Thông tin Wi-Fi
+const char* ssid = "La Tra 1";
+const char* password = "";
 
-void setup() {
+// Địa chỉ IP Flask server (máy bếp)
+const char* serverUrl = "http://192.168.1.24:5000/orders";
+const char* returnUrl = "http://192.168.1.24:5000/static/return_command.json";
+
+// Ghi nhớ đơn cuối cùng
+String lastTable = "";
+String lastDish = "";
+
+void setup() {  
   Serial.begin(115200);
+  delay(1000);
+
   WiFi.begin(ssid, password);
-  while (WiFi.status() != WL_CONNECTED) delay(1000);
+  Serial.print("Đang kết nối WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\n✅ Kết nối WiFi thành công!");
+}
+
+void executeCommand(JsonArray cmds) {
+  Serial.println("🚗 Bắt đầu thực thi lệnh:");
+  for (JsonObject cmd : cmds) {
+    serializeJson(cmd, Serial);
+    Serial.println();
+
+    if (cmd.containsKey("T")) {
+      int steps = cmd["T"];
+      Serial.printf("➡️ Tiến %d bước\n", steps);
+      // moveForward(steps);
+    } else if (cmd.containsKey("A")) {
+      int deg = cmd["A"];
+      Serial.printf("🔄 Quay %d độ tại chỗ\n", deg);
+      // rotateInPlace(deg);
+    } else if (cmd.containsKey("AL")) {
+      Serial.println("↩️ Rẽ trái 90 độ");
+      // turnLeft90();
+    } else if (cmd.containsKey("AR")) {
+      Serial.println("↪️ Rẽ phải 90 độ");
+      // turnRight90();
+    }
+  }
 }
 
 void loop() {
-  HTTPClient http;
-  http.begin("http://<your-computer-ip>:5000/get_route");
-  int httpCode = http.GET();
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
+    HTTPClient http;
+    http.begin(client, serverUrl);
+    int httpCode = http.GET();
 
-  if (httpCode == 200) {
-    String payload = http.getString();
-    Serial.println(payload); // Tại đây bạn sẽ phân tích JSON và điều hướng
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      DynamicJsonDocument doc(2048);
+      deserializeJson(doc, payload);
+      JsonArray orders = doc.as<JsonArray>();
 
-    // Parse JSON nếu muốn:
-    DynamicJsonDocument doc(1024);
-    deserializeJson(doc, payload);
-    for (JsonObject point : doc.as<JsonArray>()) {
-      float x = point["x"];
-      float y = point["y"];
-      Serial.printf("Đi đến: x=%.2f, y=%.2f\n", x, y);
-      // moveTo(x, y); // hàm điều hướng tự viết
+      if (orders.size() > 0) {
+        JsonObject last = orders[orders.size() - 1];
+        String currentTable = last["table"].as<String>();
+        String currentDish = last["dish"].as<String>();
+
+        if (currentTable != lastTable || currentDish != lastDish) {
+          Serial.printf("🧾 Bàn: %s | Món: %s\n", currentTable.c_str(), currentDish.c_str());
+
+          JsonArray commands = last["commands"];
+          executeCommand(commands);
+
+          // ✅ Chờ lệnh quay về từ bếp
+          bool returnReceived = false;
+          for (int i = 0; i < 15; i++) {  // 15 lần × 2s = 30s
+            Serial.println("⏳ Chờ lệnh quay về từ bếp...");
+            delay(2000);
+
+            HTTPClient returnHttp;
+            WiFiClient returnClient;
+            returnHttp.begin(returnClient, returnUrl);
+            int returnCode = returnHttp.GET();
+
+            if (returnCode == HTTP_CODE_OK) {
+              String returnPayload = returnHttp.getString();
+              DynamicJsonDocument returnDoc(1024);
+              DeserializationError err = deserializeJson(returnDoc, returnPayload);
+
+              if (!err) {
+                JsonArray returnPath = returnDoc.as<JsonArray>();
+                Serial.println("📦 Nhận lệnh quay về:");
+                executeCommand(returnPath);
+                returnReceived = true;
+                break;
+              }
+            }
+
+            returnHttp.end();
+          }
+
+          if (!returnReceived) {
+            Serial.println("⚠️ Không nhận được lệnh quay về sau 30 giây.");
+          }
+
+          // ✅ Cập nhật đơn đã xử lý
+          lastTable = currentTable;
+          lastDish = currentDish;
+        } else {
+          Serial.println("🕒 Không có đơn hàng mới, chờ...");
+        }
+      }
     }
+    http.end();
   }
 
-  http.end();
-  delay(10000); // Lặp lại sau 10s
+  delay(5000);  // kiểm tra lại sau 5 giây
 }

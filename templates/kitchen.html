@@ -1,29 +1,30 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <title>Đơn Hàng Nhà Bếp</title>
     <style>
         body {
             font-family: 'Arial', sans-serif;
-            background-color: #f9f9f9;
+            background-color: #f4f6f8;
             margin: 0;
             padding: 0;
         }
 
         header {
-            background-color: #4CAF50;
+            background-color: #2ecc71;
             color: white;
             text-align: center;
             padding: 20px 0;
+            font-size: 28px;
+            font-weight: bold;
         }
 
         .container {
-            padding: 20px;
-        }
-
-        h1 {
-            margin-bottom: 20px;
+            padding: 30px;
+            max-width: 700px;
+            margin: 0 auto;
         }
 
         .order-list {
@@ -33,36 +34,98 @@
 
         .order-card {
             background-color: #fff;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 10px;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
             font-size: 18px;
+            position: relative;
+            text-align: center;
+            /* ✅ Căn giữa toàn bộ nội dung */
+        }
+
+
+        .order-card button {
+            margin-top: 10px;
+            padding: 8px 16px;
+            font-size: 16px;
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .order-card button:hover {
+            background-color: #2980b9;
+        }
+
+        .status {
+            margin-top: 10px;
+            color: green;
+            font-style: italic;
+            font-size: 16px;
         }
     </style>
 </head>
+
 <body>
 
-    <header>
-        <h1>Danh Sách Đơn Hàng</h1>
-    </header>
+    <header>📦 Danh Sách Đơn Hàng</header>
 
     <div class="container">
         <ul id="orderList" class="order-list"></ul>
     </div>
 
     <script>
-        fetch('/orders')
-            .then(res => res.json())
-            .then(data => {
-                const list = document.getElementById('orderList');
-                data.forEach(order => {
-                    const li = document.createElement('li');
-                    li.className = 'order-card';
-                    li.textContent = `Bàn: ${order.table} - Món: ${order.dish}`;
-                    list.appendChild(li);
+        function loadOrders() {
+            fetch('/orders')
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('orderList');
+                    list.innerHTML = "";
+                    data.forEach((order, index) => {
+                        const li = document.createElement('li');
+                        li.className = 'order-card';
+                        li.innerHTML = `
+              <div>🧾 Bàn: <strong>${order.table}</strong> - Món: <strong>${order.dish}</strong></div>
+              <button onclick="sendReturn(${index}, this)">Gửi xe về</button>
+              <div class="status" id="status-${index}"></div>
+            `;
+                        list.appendChild(li);
+                    });
                 });
-            });
+        }
+
+        function sendReturn(index, button) {
+            fetch('/return', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ index })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    const statusDiv = document.getElementById(`status-${index}`);
+                    if (data.status === "ok") {
+                        statusDiv.textContent = "✅ Đã gửi lệnh quay về!";
+                        statusDiv.style.color = "green";
+                    } else {
+                        statusDiv.textContent = "❌ Gửi thất bại: " + (data.message || "");
+                        statusDiv.style.color = "red";
+                    }
+                })
+                .catch(err => {
+                    const statusDiv = document.getElementById(`status-${index}`);
+                    statusDiv.textContent = "⚠️ Lỗi gửi lệnh quay về";
+                    statusDiv.style.color = "red";
+                    console.error(err);
+                });
+        }
+
+        loadOrders();
+        setInterval(loadOrders, 3000);
     </script>
+
 </body>
+
 </html>
