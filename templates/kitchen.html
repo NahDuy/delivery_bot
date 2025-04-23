@@ -3,69 +3,83 @@
 
 <head>
     <meta charset="UTF-8">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <title>Đơn Hàng Nhà Bếp</title>
     <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            background-color: #f4f6f8;
-            margin: 0;
-            padding: 0;
-        }
+       body {
+  font-family: 'Poppins', sans-serif;
+  background-color: #f4f6f8;
+  margin: 0;
+  padding: 0;
+}
 
-        header {
-            background-color: #2ecc71;
-            color: white;
-            text-align: center;
-            padding: 20px 0;
-            font-size: 28px;
-            font-weight: bold;
-        }
+header {
 
-        .container {
-            padding: 30px;
-            max-width: 700px;
-            margin: 0 auto;
-        }
+  color: white;
+  background-color: #4CAF50;
+  text-align: center;
+    padding: 16px 0;
+    font-size: 24px;
+    font-weight: 600;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
-        .order-list {
-            list-style-type: none;
-            padding: 0;
-        }
+.container {
+  padding: 30px 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
 
-        .order-card {
-            background-color: #fff;
-            padding: 20px;
-            margin-bottom: 20px;
-            border-radius: 10px;
-            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.1);
-            font-size: 18px;
-            position: relative;
-            text-align: center;
-            /* ✅ Căn giữa toàn bộ nội dung */
-        }
+.order-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
 
+.order-card {
+  background-color: #ffffff;
+  padding: 20px 30px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.08);
+  font-size: 18px;
+  position: relative;
+  transition: transform 0.2s ease;
+  text-align: center;
+}
 
-        .order-card button {
-            margin-top: 10px;
-            padding: 8px 16px;
-            font-size: 16px;
-            background-color: #3498db;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-        }
+.order-card:hover {
+  transform: translateY(-4px);
+}
 
-        .order-card button:hover {
-            background-color: #2980b9;
-        }
+.order-card div {
+  margin-bottom: 12px;
+  font-size: 18px;
+}
 
-        .status {
-            margin-top: 10px;
-            color: green;
-            font-style: italic;
-            font-size: 16px;
-        }
+.order-card button {
+  padding: 10px 20px;
+  font-size: 16px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.order-card button:hover {
+  background-color: #2980b9;
+  transform: scale(1.05);
+}
+
+.status {
+  margin-top: 10px;
+  font-style: italic;
+  font-size: 16px;
+  color: green;
+  transition: color 0.3s ease;
+}
     </style>
 </head>
 

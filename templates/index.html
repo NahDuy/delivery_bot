@@ -5,87 +5,137 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Đặt Món và Giao Đồ Ăn</title>
   <style>
-    body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f2f4f7;
+     body {
+      font-family: 'Poppins', sans-serif;
       margin: 0;
-      padding: 0;
+      background: #f4f6f8;
+      text-align: center;
     }
 
     header {
       background-color: #4CAF50;
       color: white;
-      text-align: center;
       padding: 20px 0;
-      font-size: 28px;
+      font-size: 24px;
+      font-weight: 600;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
     }
 
     .container {
-      max-width: 900px;
-      margin: 0 auto;
-      padding: 30px;
-      text-align: center;
+      margin-top: 40px;
     }
 
     .section-title {
-      font-size: 22px;
-      margin: 20px 0 10px;
+      font-size: 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 20px;
     }
 
-    .table-selection, .menu-selection {
+    .table-selection {
       display: flex;
       justify-content: center;
+      gap: 30px;
       flex-wrap: wrap;
-      gap: 20px;
-      margin-bottom: 30px;
     }
 
-    .table-card, .dish-card {
-      background-color: #fff;
-      padding: 15px;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      text-align: center;
+    .table-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      width: 160px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .table-card:hover {
       cursor: pointer;
-      width: 130px;
-      transition: all 0.3s ease;
-    }
-
-    .table-card:hover, .dish-card:hover {
       transform: scale(1.05);
-      box-shadow: 0 6px 14px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
 
-    .table-card img, .dish-card img {
-      width: 100%;
-      border-radius: 8px;
+    .table-card img {
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
       margin-bottom: 10px;
     }
 
-    .dish-card.selected, .table-card.selected {
-      border: 2px solid #4CAF50;
-    }
-
-    button {
-      padding: 14px 28px;
-      background-color: #4CAF50;
-      color: white;
+    .table-card h3 {
+      margin: 0;
+      font-weight: 600;
       font-size: 18px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: 0.3s ease;
     }
 
-    button:hover {
-      background-color: #45a049;
-    }
 
     #message {
       color: #4CAF50;
       font-size: 18px;
       margin-top: 25px;
     }
+
+    /* Menu selection layout */
+.menu-selection {
+  display: flex;
+  justify-content: center;
+  gap: 30px;
+  flex-wrap: wrap;
+}
+
+/* Dish card styling */
+.dish-card {
+  background-color: white;
+  border-radius: 16px;
+  padding: 20px;
+  width: 160px;
+  text-align: center;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+}
+
+.dish-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.dish-card img {
+  width: auto;
+  height: 100px;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border-radius: 12px;
+}
+
+.dish-card h3 {
+  margin: 0;
+  font-size: 18px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Order button */
+#order-btn button {
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: 600;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+#order-btn button:hover {
+  background-color: #45a049;
+  transform: scale(1.05);
+}
+
+    
   </style>
 </head>
 <body>
@@ -96,16 +146,20 @@
     <div class="section-title">📍 Chọn bàn</div>
     <div class="table-selection">
       <div class="table-card" onclick="selectTable('ban_1', this)">
-        <img src="https://via.placeholder.com/100" alt="Bàn 1">
+        <img src="https://noithatminhkhoi.com/upload/images/ban-an-hinh-tron-danh-cho-nha-hang.jpg" alt="Bàn 1">
         <h3>Bàn 1</h3>
       </div>
       <div class="table-card" onclick="selectTable('ban_2', this)">
-        <img src="https://via.placeholder.com/100" alt="Bàn 2">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSzs_t9BXy1943zxZEHHIZSzZ_AX3Q8f-ekUw&s" alt="Bàn 2">
         <h3>Bàn 2</h3>
       </div>
       <div class="table-card" onclick="selectTable('ban_3', this)">
-        <img src="https://via.placeholder.com/100" alt="Bàn 3">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSw8ghWbwLn5CotRoBzMiw-L4iIHqTd2qcEgw&s" alt="Bàn 3">
         <h3>Bàn 3</h3>
+      </div>
+      <div class="table-card" onclick="selectTable('ban_3', this)">
+        <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQScWBh6FZvcgDXzcoAFfMYj5Rl6KMA1L3qJg&s" alt="Bàn 4">
+        <h3>Bàn 4</h3>
       </div>
     </div>
 
@@ -113,15 +167,15 @@
       <div class="section-title">🍽 Chọn món</div>
       <div class="menu-selection">
         <div class="dish-card" onclick="selectDish('pho', this)">
-          <img src="https://via.placeholder.com/100" alt="Phở">
+          <img src="https://media.istockphoto.com/id/1462352351/vi/anh/ph%E1%BB%9F.jpg?s=612x612&w=0&k=20&c=H8CFdkpTEMIHCrtByEkhpW0um8IPmjPVyeHKYpLyoVc=" alt="Phở">
           <h3>Phở</h3>
         </div>
         <div class="dish-card" onclick="selectDish('banhmi', this)">
-          <img src="https://via.placeholder.com/100" alt="Bánh Mì">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTFjLZcRo9cohDLSjAe6zuslM5ipk5CDQqgWA&s" alt="Bánh Mì">
           <h3>Bánh Mì</h3>
         </div>
         <div class="dish-card" onclick="selectDish('comtam', this)">
-          <img src="https://via.placeholder.com/100" alt="Cơm Tấm">
+          <img src="https://media-cdn-v2.laodong.vn/storage/newsportal/2023/11/29/1273358/Com-Tam-2-01.jpeg" alt="Cơm Tấm">
           <h3>Cơm Tấm</h3>
         </div>
       </div>
@@ -138,7 +192,7 @@
     let selectedTable = "";
     let selectedDish = "";
 
-    const KITCHEN_IP = "http://192.168.1.24:5000"; // chỉnh IP nếu cần
+    const KITCHEN_IP = "http://192.168.81.11:5000"; // chỉnh IP nếu cần
 
     function clearSelected(className) {
       const elements = document.querySelectorAll(`.${className}`);

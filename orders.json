@@ -1,1 +1,1 @@
-[{"table": "ban_1", "dish": "banhmi", "commands": [{"T": 2}], "returnPath": [{"A": 180}, {"T": 2}, {"A": 180}]}, {"table": "ban_1", "dish": "banhmi", "commands": [{"T": 2}], "returnPath": [{"A": 180}, {"T": 2}, {"A": 180}]}]
+[{"table": "ban_1", "dish": "pho", "commands": [{"T": 2}], "returnPath": [{"A": 180}, {"T": 2}, {"A": 360}]}]
