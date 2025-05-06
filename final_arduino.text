@@ -1,0 +1,253 @@
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+
+// Chân điều khiển động cơ
+#define ENA 19
+#define IN1 18
+#define IN2 5
+#define IN3 4
+#define IN4 2
+#define ENB 15
+
+// Cảm biến và còi
+#define IR_PIN 22
+#define BUZZER_PIN 23
+
+// WiFi và server
+const char* ssid = "Ủn Ỉn";
+const char* password = "khongcho";
+const char* ip = "192.168.79.159";
+String serverUrl = "http://" + String(ip) + ":5000/orders";
+String returnUrl = "http://" + String(ip) + ":5000/static/return_command.json";
+
+// Lưu đơn hàng trước đó
+String lastTable = "";  // bỏ dùng
+int lastOrderId = -1;
+String lastDish = "";
+
+// Thiết lập chân động cơ
+void setupMotors() {
+  pinMode(ENA, OUTPUT);
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENB, OUTPUT);
+}
+
+// Kiểm tra vật cản
+bool isObstacle() {
+  return digitalRead(IR_PIN) == LOW;
+}
+
+// Dừng động cơ
+void stopMotors() {
+  digitalWrite(ENA, LOW);
+  digitalWrite(ENB, LOW);
+}
+
+// Tiến về trước kèm kiểm tra vật cản
+void moveForward(int duration_ms) {
+  unsigned long startTime = millis();
+  while (millis() - startTime < duration_ms) {
+    if (isObstacle()) {
+      Serial.println("⛔ Vật cản phía trước! Dừng lại và bíp còi.");
+      stopMotors();
+      digitalWrite(BUZZER_PIN, HIGH);
+      while (isObstacle()) {
+        delay(100);
+      }
+      digitalWrite(BUZZER_PIN, LOW);
+      Serial.println("✅ Đường đã thông. Tiếp tục di chuyển.");
+    }
+
+    digitalWrite(IN1, HIGH);
+    digitalWrite(IN2, LOW);
+    digitalWrite(IN3, HIGH);
+    digitalWrite(IN4, LOW);
+    digitalWrite(ENA, HIGH);
+    digitalWrite(ENB, HIGH);
+    delay(100);
+  }
+  stopMotors();
+}
+
+void turnLeft90() {
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, HIGH);
+  digitalWrite(IN3, HIGH);
+  digitalWrite(IN4, LOW);
+  digitalWrite(ENA, HIGH);
+  digitalWrite(ENB, HIGH);
+  delay(500);
+  stopMotors();
+}
+
+void turnRight90() {
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  digitalWrite(ENA, HIGH);
+  digitalWrite(ENB, HIGH);
+  delay(500);
+  stopMotors();
+}
+
+void rotateInPlace(int degrees) {
+  stopMotors();  // dừng hẳn trước khi quay
+  delay(200);
+  int duration = map(degrees, 0, 360, 0, 1190);
+  digitalWrite(IN1, HIGH);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, HIGH);
+  digitalWrite(ENA, HIGH);
+  digitalWrite(ENB, HIGH);
+  delay(duration);
+  stopMotors();
+}
+
+// Thực thi chuỗi lệnh
+void executeCommand(JsonArray cmds) {
+  Serial.println("🚗 Bắt đầu thực thi lệnh:");
+  for (JsonObject cmd : cmds) {
+    serializeJson(cmd, Serial);
+    Serial.println();
+
+    if (cmd.containsKey("T")) {
+      int steps = cmd["T"];
+      Serial.printf("➡️ Tiến %d bước\n", steps);
+      for (int i = 0; i < steps; i++) moveForward(1000);
+    } else if (cmd.containsKey("A")) {
+      int deg = cmd["A"];
+      Serial.printf("🔄 Quay tại chỗ %d độ\n", deg);
+      rotateInPlace(deg);
+    } else if (cmd.containsKey("AL")) {
+      Serial.println("↩️ Rẽ trái 90 độ");
+      turnLeft90();
+    } else if (cmd.containsKey("AR")) {
+      Serial.println("↪️ Rẽ phải 90 độ");
+      turnRight90();
+    }
+  }
+}
+void buzzerNotify() {
+  for (int i = 0; i < 2; i++) {
+    digitalWrite(BUZZER_PIN, HIGH);
+    delay(200);
+    digitalWrite(BUZZER_PIN, LOW);
+    delay(200);
+  }
+}
+
+
+void setup() {
+  Serial.begin(115200);
+  setupMotors();
+
+  pinMode(IR_PIN, INPUT);
+  pinMode(BUZZER_PIN, OUTPUT);
+  digitalWrite(BUZZER_PIN, LOW);  // tắt còi ban đầu
+
+  WiFi.begin(ssid, password);
+  Serial.print("🔌 Đang kết nối WiFi");
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println("\n✅ Kết nối WiFi thành công!");
+}
+
+
+void loop() {
+  // Kiểm tra nếu có lệnh quay về
+  HTTPClient returnHttp;
+  WiFiClient returnClient;
+  returnHttp.begin(returnClient, returnUrl);
+  int returnCode = returnHttp.GET();
+
+  if (returnCode == HTTP_CODE_OK) {
+  String returnPayload = returnHttp.getString();
+  DynamicJsonDocument returnDoc(1024);
+  DeserializationError returnErr = deserializeJson(returnDoc, returnPayload);
+  if (!returnErr && returnDoc.is<JsonArray>()) {
+    JsonArray returnPath = returnDoc.as<JsonArray>();
+
+    if (returnPath.size() > 0) {
+      Serial.println("📦 Nhận lệnh quay về từ kitchen:");
+      executeCommand(returnPath);
+      buzzerNotify();  // Bíp sau khi về đến nơi
+
+      // Gọi API để xóa return_command
+      HTTPClient clearHttp;
+      String clearUrl = "http://" + String(ip) + ":5000/clear_return";
+      clearHttp.begin(clearUrl);
+      clearHttp.GET();
+      clearHttp.end();
+    }
+  }
+}
+
+
+
+
+  if (WiFi.status() == WL_CONNECTED) {
+    WiFiClient client;
+    HTTPClient http;
+    http.begin(client, serverUrl);
+    int httpCode = http.GET();
+
+    if (httpCode == HTTP_CODE_OK) {
+      String payload = http.getString();
+      Serial.println("📦 JSON đơn hàng:");
+      Serial.println(payload);
+
+      DynamicJsonDocument doc(2048);
+      DeserializationError err = deserializeJson(doc, payload);
+      if (err) {
+        Serial.print("❌ Lỗi parse JSON đơn hàng: ");
+        Serial.println(err.c_str());
+        return;
+      }
+
+      JsonArray orders = doc.as<JsonArray>();
+      Serial.printf("📋 Tổng đơn hàng: %d", orders.size());
+      if (orders.size() > 0) {
+        JsonObject last = orders[orders.size() - 1];
+        int currentId = last["id"] | -1;
+        String currentTable = last["table"].as<String>();
+        String currentDish = last["dish"].as<String>();
+
+        Serial.printf("🧾 Bàn: %s | Món: %s", currentTable.c_str(), currentDish.c_str());
+
+        if (currentId != lastOrderId) {
+          Serial.println("✅ Có đơn mới, thực thi...");
+
+          if (last["commands"].is<JsonArray>()) {
+            JsonArray commands = last["commands"].as<JsonArray>();
+            Serial.println("▶️ Lệnh đi tới:");
+            serializeJson(commands, Serial);
+            Serial.println();
+            executeCommand(commands);
+            buzzerNotify();  // Bíp báo khách sau khi giao hàng
+
+          } else {
+            Serial.println("❌ 'commands' không phải mảng JSON hợp lệ!");
+          }
+
+          Serial.println("⏳ Đang chờ lệnh quay về từ kitchen (thủ công)...");
+          lastTable = currentTable;
+          lastDish = currentDish;
+          lastOrderId = currentId;
+        } else {
+          Serial.println("🔁 Đơn hàng cũ, bỏ qua.");
+        }
+      }
+      http.end();
+    }
+  }
+
+  delay(5000);
+}

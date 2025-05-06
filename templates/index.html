@@ -129,6 +129,10 @@
   cursor: pointer;
   transition: background-color 0.2s, transform 0.2s;
 }
+.selected {
+  border: 3px solid #4CAF50;
+  box-shadow: 0 0 12px rgba(76, 175, 80, 0.5);
+}
 
 #order-btn button:hover {
   background-color: #45a049;
@@ -192,7 +196,7 @@
     let selectedTable = "";
     let selectedDish = "";
 
-    const KITCHEN_IP = "http://192.168.81.11:5000"; // chỉnh IP nếu cần
+    const KITCHEN_IP = "http://192.168.79.159:5000"; // chỉnh IP nếu cần
 
     function clearSelected(className) {
       const elements = document.querySelectorAll(`.${className}`);

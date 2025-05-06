@@ -89,6 +89,10 @@ header {
 
     <div class="container">
         <ul id="orderList" class="order-list"></ul>
+    
+    <div class="container">
+        <h2 style="text-align:center; margin-top: 40px;">📜 Lịch Sử Đơn Hàng</h2>
+        <ul id="historyList" class="order-list"></ul>
     </div>
 
     <script>
@@ -138,6 +142,29 @@ header {
 
         loadOrders();
         setInterval(loadOrders, 3000);
+
+        function loadHistory() {
+            fetch('/history')
+                .then(res => res.json())
+                .then(data => {
+                    const list = document.getElementById('historyList');
+                    list.innerHTML = "";
+                    data.slice().reverse().forEach(order => {
+                        const li = document.createElement('li');
+                        li.className = 'order-card';
+                        li.innerHTML = `
+              <div>🧾 Bàn: <strong>${order.table}</strong> - Món: <strong>${order.dish}</strong></div>
+              <div class="status">✅ Đã giao thành công</div>
+            `;
+                        list.appendChild(li);
+                    });
+                });
+        }
+
+        // Tải lịch sử mỗi 5 giây
+        loadHistory();
+        setInterval(loadHistory, 5000);
+
     </script>
 
 </body>
